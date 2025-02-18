@@ -1,38 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <!-- Configuración para que el diseño sea responsivo -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estudia las Banderas de América del Sur</title>
-  <!-- Cargamos Tailwind CSS desde un CDN -->
+  <!-- Cargar Tailwind CSS desde un CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Puedes agregar estilos personalizados aquí si lo deseas */
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 transition-colors duration-300">
-  <!-- Encabezado e instrucciones -->
-  <header class="mb-6 text-center">
-    <h1 class="text-3xl font-bold mb-2">Estudia las Banderas de América del Sur</h1>
-    <p class="text-gray-700 max-w-xl">
-      Instrucciones: Se mostrará el nombre de un país. Haz clic en la bandera correspondiente. Si aciertas, la pantalla se pondrá en verde y se generará el siguiente país. Si fallas, se pondrá en rojo, y podrás intentarlo las veces que necesites. Utiliza el botón "Nueva Partida" para reiniciar el juego (las banderas se mantendrán en el mismo orden, pero los nombres se barajarán).
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+  <!-- Encabezado -->
+  <header class="w-full max-w-4xl text-center my-8">
+    <h1 class="text-4xl font-bold mb-4">Estudia las Banderas de América del Sur</h1>
+    <p class="text-lg text-gray-700">
+      Toca o haz clic en la bandera correspondiente al país que se indica. Si aciertas, la pantalla se pondrá verde y pasarás al siguiente; si fallas, se mostrará en rojo y podrás volver a intentarlo. ¡Practica hasta dominar todas!
     </p>
   </header>
 
-  <!-- Contenedor del juego -->
-  <div id="game-container" class="w-full max-w-4xl">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-4">
-      <div id="prompt" class="text-2xl font-semibold mb-2 md:mb-0">
-        ¿Cuál es la bandera de …?
-      </div>
-      <button id="new-game-btn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition">
+  <!-- Contenedor principal del juego -->
+  <main id="game-container" class="w-full max-w-4xl">
+    <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+      <div id="prompt" class="text-2xl font-semibold">¿Cuál es la bandera de ...?</div>
+      <button id="new-game-btn" class="mt-4 md:mt-0 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
         Nueva Partida
       </button>
     </div>
-    <!-- Rejilla de banderas -->
+    <!-- Rejilla de banderas (orden fijo) -->
     <div id="flag-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-  </div>
+  </main>
 
-  <!-- Script con toda la lógica -->
+  <!-- Pie de página con instrucciones adicionales -->
+  <footer class="mt-8 text-center text-gray-500">
+    <p>Sube este archivo a GitHub Pages y compártelo mediante un enlace.</p>
+  </footer>
+
+  <!-- Lógica de la aplicación -->
   <script>
-    // Datos: lista de países y sus códigos (para obtener las imágenes desde flagcdn.com)
+    // Lista de países y sus códigos ISO (usados para obtener las banderas de flagcdn.com)
     const countries = [
       { name: "Argentina", code: "ar" },
       { name: "Bolivia", code: "bo" },
@@ -48,7 +55,6 @@
       { name: "Venezuela", code: "ve" }
     ];
 
-    // Variables de estado del juego
     let shuffledCountries = [];
     let currentIndex = 0;
 
@@ -57,37 +63,44 @@
     const flagGrid = document.getElementById("flag-grid");
     const newGameBtn = document.getElementById("new-game-btn");
 
-    // Función para crear la cuadrícula de banderas (orden fijo)
+    // Función para crear la cuadrícula de banderas (se muestra siempre en el mismo orden)
     function createFlagGrid() {
-      flagGrid.innerHTML = ""; // Limpiar cualquier contenido previo
-      // Se muestran las banderas en el orden definido en el array "countries"
+      flagGrid.innerHTML = "";
       countries.forEach(country => {
-        const flagDiv = document.createElement("div");
-        flagDiv.className = "border rounded p-2 cursor-pointer hover:shadow-lg transition";
-        flagDiv.dataset.country = country.name;
+        const div = document.createElement("div");
+        div.className = "border rounded overflow-hidden shadow cursor-pointer hover:shadow-lg transition transform hover:scale-105";
+        div.dataset.country = country.name;
         
-        // Usamos flagcdn.com para mostrar la bandera (imagen en ancho 320px)
         const img = document.createElement("img");
         img.src = `https://flagcdn.com/w320/${country.code}.png`;
         img.alt = country.name;
         img.className = "w-full h-auto object-cover";
         
-        flagDiv.appendChild(img);
-        // Al hacer clic se evalúa si es la bandera correcta
-        flagDiv.addEventListener("click", () => handleFlagClick(country.name));
-        flagGrid.appendChild(flagDiv);
+        div.appendChild(img);
+        // Soporta clic y toque para mayor compatibilidad
+        div.addEventListener("click", () => handleFlagClick(country.name));
+        div.addEventListener("touchend", () => handleFlagClick(country.name));
+        
+        flagGrid.appendChild(div);
       });
     }
 
-    // Función para barajar un array (método simple)
+    // Función para mezclar el array (algoritmo Fisher-Yates)
     function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
+      let currentIndex = array.length, randomIndex;
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
     }
 
-    // Iniciar nueva partida: se barajan los nombres y se reinicia el índice
+    // Iniciar una nueva partida: se mezclan los nombres y se reinicia el índice
     function startNewGame() {
       currentIndex = 0;
-      shuffledCountries = shuffle([...countries]); // Creamos una copia y la barajamos
+      // Se crea una copia del array y se mezcla
+      shuffledCountries = shuffle([...countries]);
       updatePrompt();
       document.body.classList.remove("bg-green-300", "bg-red-300");
     }
@@ -101,23 +114,19 @@
       }
     }
 
-    // Función que se ejecuta al hacer clic en una bandera
+    // Manejar el evento de selección de una bandera
     function handleFlagClick(selectedCountry) {
-      // Si ya se completó la partida, no se hace nada
       if (currentIndex >= shuffledCountries.length) return;
-
       if (selectedCountry === shuffledCountries[currentIndex].name) {
-        // Acierto: se muestra fondo verde y se pasa al siguiente país
         flashBackground("green");
         currentIndex++;
         setTimeout(updatePrompt, 300);
       } else {
-        // Error: se muestra fondo rojo y se permite reintentar
         flashBackground("red");
       }
     }
 
-    // Función para cambiar brevemente el color de fondo (verde o rojo)
+    // Función para cambiar brevemente el color de fondo (verde o rojo) al acertar o fallar
     function flashBackground(color) {
       if (color === "green") {
         document.body.classList.add("bg-green-300");
@@ -129,12 +138,13 @@
       }, 300);
     }
 
-    // Asignar el evento al botón "Nueva Partida"
-    newGameBtn.addEventListener("click", startNewGame);
-
-    // Inicializamos la cuadrícula y la partida al cargar la página
+    // Inicializar la aplicación
     createFlagGrid();
     startNewGame();
+
+    // Asignar eventos al botón "Nueva Partida"
+    newGameBtn.addEventListener("click", startNewGame);
+    newGameBtn.addEventListener("touchend", startNewGame);
   </script>
 </body>
 </html>
